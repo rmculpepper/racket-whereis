@@ -1,7 +1,10 @@
 #lang racket/base
 (require racket/cmdline
          raco/command-name
-         "../main.rkt")
+         "../main.rkt"
+         (only-in "whereis.rkt"
+                  whereis-system-base-keys
+                  whereis-system-procs))
 
 ;; Scriptability:
 ;; - Prints path(s) found to stdout, errors/warnings to stderr.
@@ -11,11 +14,12 @@
 ;;   - 2 if any request returned #f (but not empty list)
 ;;   - 0 otherwise
 
-(define (report v)
+(define (report v [prefix ""])
   (define (print-path p)
-    (printf "~a\n" (path->string (simplify-path p))))
+    (printf "~a~a\n" prefix (path->string (simplify-path p))))
   (cond [(list? v) (for-each print-path v)]
-        [(path? v) (print-path v)]))
+        [(path? v) (print-path v)]
+        [(string? v) (printf "~a~a\n" v)]))
 
 (define (string->datum what s)
   (define in (open-input-string s))
@@ -42,7 +46,7 @@
 
    [("-a" "--auto")
     module-or-collection-or-pkg
-    "Print the most relevant associated directory"
+    ["" "Print the most relevant associated *directory* (not file) path"]
     (push! (lambda () (whereis-auto module-or-collection-or-pkg)))]
 
    [("-m" "--module")
@@ -53,7 +57,7 @@
 
    [("-l" "--library-module")
     lib-module-path
-    "Print the path of `(lib ,lib-module-path)"
+    ["" "Print the path of `(lib ,lib-module-path)"]
     (push! (lambda () (whereis-module `(lib ,lib-module-path))))]
 
    [("-p" "--pkg")
@@ -79,16 +83,23 @@
 
    [("-b" "--binding")
     providing-module name
-    "Print the path where the given name was defined"
+    ["" "Print the path where the given name was defined"]
     (let ([providing-module (string->datum "module path" providing-module)]
           [name (string->symbol name)])
       (push! (lambda () (whereis-binding/symbol providing-module name))))]
 
-   ;; [("--show-system-paths") "..." ;; doesn't include find-system-path
-   ;;  (for ([sym (in-hash-keys whereis-system-procs)])
-   ;;    (printf "-- ~s --\n" sym)
-   ;;      (report (whereis-system sym))
-   ;;    (newline))]
+   [("--all-system-paths")
+    "Show all supported --system keys and their values"
+    (let ()
+      (define (show-keys keys)
+        (for ([sym (in-list keys)])
+          (define value
+            (with-handlers ([exn:fail? (lambda (e) null)])
+              (whereis-system sym)))
+          (printf "~s:\n" sym)
+          (report value "  ")))
+      (show-keys whereis-system-base-keys)
+      (show-keys (map car whereis-system-procs)))]
 
    #:args ()
    (let ([any-failed? #f])

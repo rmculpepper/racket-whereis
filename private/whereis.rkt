@@ -1,6 +1,5 @@
 #lang racket/base
-(require (for-syntax (only-in racket/base ~@))
-         racket/path
+(require racket/path
          syntax/modresolve
          setup/dirs
          raco/all-tools
@@ -72,17 +71,23 @@
 
     ;; == others ==
     [else
-     (cond [(hash-ref whereis-system-procs name #f)
-            => (lambda (proc)
-                 (or (proc)
+     (cond [(assoc name whereis-system-procs)
+            => (lambda (entry)
+                 (or ((cdr entry))
                      (error 'whereis-system "no path for location: (~s) returned #f"
                             name)))]
            [else (error 'whereis-system "unknown system location: ~e" name)])]))
 
-;; whereis-system-procs : Hash[Symbol => (-> (U Path (Listof Path) #f))
+(define whereis-system-base-keys
+  '(home-dir
+    pref-dir pref-file temp-dir init-dir init-file
+    addon-dir doc-dir desk-dir sys-dir
+    exec-file config-dir host-config-dir collects-dir host-collects-dir))
+
+;; whereis-system-procs : (Listof (cons Symbol (-> (U Path (Listof Path) #f))))
 (define whereis-system-procs
   (let ()
-    (define-syntax-rule (hq name ...) (hasheq (~@ 'name name) ...))
+    (define-syntax-rule (hq name ...) (list (cons 'name name) ...))
     (hq
      ;; == setup/dirs ==
      find-collects-dir
