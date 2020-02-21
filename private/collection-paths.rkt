@@ -1,6 +1,5 @@
 #lang racket/base
-(require racket/contract
-         setup/link
+(require setup/link
          racket/match
          setup/collection-name
          racket/list)
