@@ -24,7 +24,7 @@ This package provides an API and @exec{raco} command that consolidates
 support for finding paths significant to Racket.
 
 
-@section[#:tag "api"]{@racketmodname[whereis] API}
+@section[#:tag "api"]{API for Finding Racket Paths}
 
 @defmodule[whereis]
 
@@ -188,7 +188,7 @@ If @racket[id] is defined in a submodule, @(returns-enclosing).
 
 
 @; ============================================================
-@section[#:tag "raco-whereis"]{@exec{raco whereis}: Finding Racket Local Paths}
+@section[#:tag "raco-whereis"]{@exec{raco whereis}: Finding Racket Paths}
 
 @(define-syntax-rule (ttlist e ...)
    (apply elem (add-between (list (tt (format "~a" 'e)) ...) ", ")))
