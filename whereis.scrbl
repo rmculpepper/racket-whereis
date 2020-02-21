@@ -14,6 +14,16 @@
   (define-syntax-rule (my-examples e ...)
     (examples #:eval my-eval e ...)))
 
+@(define (returns-enclosing)
+   "the path of the enclosing top-level module is returned")
+
+@(define (prints-enclosing)
+   "the path of the enclosing top-level module is printed")
+
+This package provides an API and @exec{raco} command that consolidates
+support for finding paths significant to Racket.
+
+
 @section[#:tag "api"]{@racketmodname[whereis] API}
 
 @defmodule[whereis]
@@ -23,6 +33,7 @@ filesystem paths corresponding to Racket modules, collections,
 packages, etc.
 
 See also @secref["raco-whereis"].
+
 
 @defproc[(whereis-module [modpath (or/c module-path? module-path-index?)])
          path?]{
@@ -38,7 +49,8 @@ Returns the path containing the declaration of the given module.
 ]
 
 If @racket[modpath] cannot be resolved or resolves to a nonexistant
-file, an exception is raised.
+file, an exception is raised. If @racket[modpath] refers to a
+submodule, @(returns-enclosing).
 }
 
 
@@ -54,6 +66,9 @@ depending on collection roots and installed packages.
 (whereis-collection "racket/gui")
 (whereis-collection "drracket")
 ]
+
+In contrast to @racket[collection-path], this procedure returns
+returns @emph{all} directories associated with @racket[collection].
 
 If no directories are found for @racket[collection], an exception is
 raised.
@@ -88,8 +103,8 @@ command.
 (whereis-raco "whereis")
 ]
 
-An error is reported if the given @exec{raco} command is not
-registered.
+An error is reported if the given @exec{raco} command is not registered.
+If the command is implemented by a submodule, @(returns-enclosing).
 }
 
 
@@ -122,7 +137,8 @@ Example: @racket[(whereis-system 'get-config-dir)].}
 ]
 
 If @racket[name] is unknown or if the implementation returns
-@racket[#f], an exception is raised.}
+@racket[#f], an exception is raised.
+}
 
 
 @defproc[(whereis-binding [id identifier?]
@@ -147,6 +163,7 @@ used) instead of the definition site of the binding being protected.
 If @racket[id] does not refer to a module export at phase
 @racket[phase], or if the binding was defined by a built-in module
 (such as @racketmodname['#%kernel]), an error is reported.
+If @racket[id] is defined in a submodule, @(returns-enclosing).
 }
 
 
@@ -166,9 +183,8 @@ be different due to renamings.
 If @racket[providing-mod] does not have an export named @racket[name],
 or if the binding was defined by a built-in module (such as
 @racketmodname['#%kernel]), an error is reported.
+If @racket[id] is defined in a submodule, @(returns-enclosing).
 }
-
-
 
 
 @; ============================================================
@@ -199,7 +215,9 @@ same as @exec{raco whereis -m racket}}
 ]
 
 An error is reported if @nonterm{module-path} cannot be resolved or if
-it ``resolves'' to a nonexistant file.}
+it ``resolves'' to a nonexistant file.
+If @nonterm{module-path} refers to a submodule, @(prints-enclosing).
+}
 
 @item{@Flag{c} @nonterm{collection} or @DFlag{collect}
 @nonterm{collection} --- Prints the directory paths corresponding to
@@ -214,7 +232,8 @@ Examples:
 ]
 
 An error is reported if @nonterm{collection} is invalid (see
-@racket[collection-name?]) or if no directories are found.}
+@racket[collection-name?]) or if no directories are found.
+}
 
 @item{@Flag{p} @nonterm{package} or @DFlag{pkg} @nonterm{package} ---
 Prints the path of the directory containing @nonterm{package}, which
@@ -226,7 +245,8 @@ Examples:
 @item{@exec{raco whereis -p pict-lib}}
 ]
 
-If @nonterm{package} is not installed, an error is reported.}
+If @nonterm{package} is not installed, an error is reported.
+}
 
 @item{@Flag{r} @nonterm{command} or @DFlag{raco} @nonterm{command} ---
 Prints the path of the module implementing the given @exec{raco} command.
@@ -237,7 +257,9 @@ Examples:
 @item{@exec{raco whereis -r whereis}}
 ]
 
-An error is reported if the given @exec{raco} command is not registered.}
+An error is reported if the given @exec{raco} command is not registered.
+If @nonterm{command} is implemented by a submodule, @(prints-enclosing).
+}
 
 @item{@Flag{s} @nonterm{name} or @DFlag{system} @nonterm{name} ---
 Prints the path or paths corresponding to the given system location.
@@ -265,7 +287,15 @@ Example: @exec{raco whereis -s find-config-dir}.}
 ]
 
 If @nonterm{name} is unknown or if the corresponding procedure returns
-@racket[#f], an error is reported.}
+@racket[#f], an error is reported.
+}
+
+@item{@DFlag{all-system-paths} ---
+Prints all supported ``system'' locations (that is, valid arguments to
+@DFlag{system}) and their values. If a location's corresponding
+procedure returns @racket[#f], instead of printing an error message
+like @DFlag{system}, the location is printed without any values.
+}
 
 @item{@Flag{b} @nonterm{providing-module} @nonterm{name} or
       @DFlag{binding} @nonterm{providing-module} @nonterm{name}
@@ -287,6 +317,8 @@ used) instead of the definition site of the binding being protected.
 
 If @nonterm{name} is not provided by @nonterm{providing-module}, or if
 the binding was defined by a built-in module (such as
-@racketmodname['#%kernel]), an error is reported.}
+@racketmodname['#%kernel]), an error is reported.
+If @nonterm{name} is defined in a submodule, @(prints-enclosing).
+}
 
 ]
