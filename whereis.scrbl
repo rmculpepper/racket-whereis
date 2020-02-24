@@ -1,6 +1,6 @@
 #lang scribble/manual
 @(require racket/list scribble/example scribble/bnf
-          (for-label racket/base racket/contract whereis pkg/lib))
+          (for-label racket/base racket/contract setup/collection-name whereis pkg/lib))
 
 @title[#:tag "whereis"]{Finding Racket Paths}
 
